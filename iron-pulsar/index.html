@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>IRON PULSAR JV TACTICAL</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{margin:0;height:100%;background:#05080a;color:#dfe8e4;font-family:'Segoe UI',system-ui,sans-serif;overflow:hidden;touch-action:none}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hidden{display:none!important}
+.screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(5,9,12,.88);z-index:20;padding:16px;text-align:center;overflow:auto}
+.screen h1{margin:0;letter-spacing:.2em;font-size:clamp(22px,5vw,44px);color:#7df9ff;text-shadow:0 0 18px #00b8d4}
+.screen h2{margin:0;letter-spacing:.15em}
+.sub{opacity:.7;font-size:13px;max-width:520px}
+button,select{font:inherit;color:#dfe8e4;background:#14262b;border:1px solid #2f6f7a;padding:12px 22px;border-radius:4px;min-width:240px;cursor:pointer}
+button:hover:not(:disabled){background:#1d3c44}
+button:disabled{opacity:.4;cursor:default}
+button.primary{background:#0a6b78;border-color:#7df9ff;font-weight:700;letter-spacing:.1em}
+.ops{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:640px}
+.op{border:1px solid #2f6f7a;padding:8px 12px;border-radius:4px;font-size:13px;width:150px;cursor:pointer}
+.op.sel{border-color:#7df9ff;background:#0e3a42}.op.off{opacity:.45;cursor:default}
+label{display:flex;gap:10px;align-items:center;justify-content:space-between;width:min(360px,90vw)}
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10;font-weight:600;text-shadow:0 1px 3px #000}
+#crosshair{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border:1px solid #fff;border-radius:50%;opacity:.85}
+#hitmark{position:absolute;left:50%;top:50%;width:26px;height:26px;margin:-13px;opacity:0;border:2px solid #fff;transform:rotate(45deg);transition:opacity .25s}
+#hitmark.kill{border-color:#ff3b3b}
+#vignette{position:absolute;inset:0;box-shadow:inset 0 0 140px 40px rgba(220,0,0,.9);opacity:0;transition:opacity .4s}
+#scope{position:absolute;inset:0;background:radial-gradient(circle at center,transparent 0,transparent 30vmin,#000 30.3vmin)}
+#scope::before,#scope::after{content:'';position:absolute;background:#000}
+#scope::before{left:50%;top:50%;width:60vmin;height:2px;margin:-1px 0 0 -30vmin}
+#scope::after{left:50%;top:50%;height:60vmin;width:2px;margin:-30vmin 0 0 -1px}
+#topLeft{position:absolute;left:max(12px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));font-size:13px}
+#topLeft ul{list-style:none;margin:4px 0 0;padding:0}#topLeft li.done{color:#6dff9a;text-decoration:line-through}
+#fps{position:absolute;right:max(12px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));font-size:11px;opacity:.6}
+#msg{position:absolute;left:0;right:0;top:22%;text-align:center;font-size:18px;opacity:0;transition:opacity .3s}
+#hint{position:absolute;left:0;right:0;bottom:16%;text-align:center;font-size:14px;opacity:.8}
+#bottomLeft{position:absolute;left:max(14px,env(safe-area-inset-left));bottom:max(12px,env(safe-area-inset-bottom));width:200px}
+.bar{height:10px;background:#0006;border:1px solid #fff6}#hpFill{height:100%;width:100%;background:#4cff7a}
+#bottomRight{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:max(12px,env(safe-area-inset-bottom));text-align:right}
+#ammo{font-size:30px}#weaponName{font-size:13px;letter-spacing:.1em}
+#touch{position:fixed;inset:0;z-index:12}
+#lookZone{position:absolute;right:0;top:0;width:55%;height:100%}
+#joyZone{position:absolute;left:0;bottom:0;width:42%;height:60%}
+#joyBase{position:absolute;left:max(40px,env(safe-area-inset-left));bottom:40px;width:110px;height:110px;border-radius:50%;border:2px solid #fff5;background:#fff1}
+#joyKnob{position:absolute;left:30px;top:30px;width:50px;height:50px;border-radius:50%;background:#fff6}
+.tb{position:absolute;min-width:0;width:56px;height:56px;padding:0;border-radius:50%;font-size:10px;background:#0b1a1ecc;border:2px solid #fff6;opacity:.85}
+.tb.on{background:#0a6b78;border-color:#7df9ff}
+.tb[data-act=fire]{right:24px;bottom:36px;width:84px;height:84px;font-size:13px}
+.tb[data-act=ads]{right:120px;bottom:30px}.tb[data-act=jump]{right:24px;bottom:132px}
+.tb[data-act=reload]{right:96px;bottom:98px}.tb[data-act=crouch]{right:168px;bottom:92px}
+.tb[data-act=run]{left:170px;bottom:130px}.tb[data-act=swap]{right:24px;top:70px}
+.tb[data-act=grenade]{right:92px;top:70px}.tb[data-act=pause]{right:24px;top:8px;width:40px;height:40px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud" class="hidden">
+  <div id="scope" class="hidden"></div><div id="vignette"></div>
+  <div id="crosshair"></div><div id="hitmark"></div>
+  <div id="topLeft"><b>OBJETIVOS</b><ul id="objList"></ul></div>
+  <div id="fps"></div><div id="msg"></div><div id="hint"></div>
+  <div id="bottomLeft"><div class="bar"><div id="hpFill"></div></div><div id="hpText">100</div></div>
+  <div id="bottomRight"><div id="weaponName"></div><div id="ammo"></div><div id="gren"></div></div>
+</div>
+<div id="touch" class="hidden">
+  <div id="lookZone"></div>
+  <div id="joyZone"><div id="joyBase"><div id="joyKnob"></div></div></div>
+  <button class="tb" data-act="fire">FOGO</button><button class="tb" data-act="ads">MIRA</button>
+  <button class="tb" data-act="jump">PULO</button><button class="tb" data-act="reload">RECARR</button>
+  <button class="tb" data-act="crouch">AGACH</button><button class="tb" data-act="run">CORRER</button>
+  <button class="tb" data-act="swap">ARMA</button><button class="tb" data-act="grenade">GRAN</button>
+  <button class="tb" data-act="pause">II</button>
+</div>
+<div id="screen-menu" class="screen">
+  <h1>IRON PULSAR</h1><h2>JV TACTICAL</h2>
+  <div class="ops" id="ops"></div>
+  <button class="primary" id="btnStart">INICIAR OPERAÇÃO</button>
+  <button id="btnSettings">CONFIGURAÇÕES</button>
+  <div class="sub">PC: WASD, mouse, Shift correr, C agachar, Espaço pular, R recarregar, Q/1-3/roda trocar arma, G granada, botão direito mirar.</div>
+</div>
+<div id="screen-settings" class="screen hidden">
+  <h2>CONFIGURAÇÕES</h2>
+  <label>Gráficos <select id="selPreset"></select></label>
+  <label>Limite de FPS <select id="selFps"></select></label>
+  <label>Sensibilidade <input type="range" id="rngSens" min="0.3" max="2.5" step="0.1"></label>
+  <div class="sub" id="aaNote"></div>
+  <button id="btnBack">VOLTAR</button>
+</div>
+<div id="screen-pause" class="screen hidden">
+  <h2>PAUSADO</h2><button class="primary" id="btnResume">CONTINUAR</button>
+  <button id="btnRestart">REINICIAR OPERAÇÃO</button><button id="btnSettings2">CONFIGURAÇÕES</button><button id="btnMenu">MENU PRINCIPAL</button>
+</div>
+<div id="screen-end" class="screen hidden"><h1 id="endTitle"></h1><div class="sub" id="endInfo"></div>
+  <button class="primary" id="btnRetry">JOGAR NOVAMENTE</button><button id="btnMenu2">MENU PRINCIPAL</button></div>
+<div id="screen-loading" class="screen hidden"><h2>CARREGANDO OPERAÇÃO...</h2></div>
+<div id="screen-rotate" class="screen hidden" style="z-index:40"><h2>Gire o dispositivo para o modo paisagem</h2></div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
